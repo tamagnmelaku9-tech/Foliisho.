@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Driver profile and vehicle preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Unique user ID matching Auth UID" },
+        "fullName": { "type": "string", "description": "Driver's full name" },
+        "phoneNumber": { "type": "string", "description": "Ethiopian phone number" },
+        "vehiclePlate": { "type": "string", "description": "Ethiopian vehicle plate number" },
+        "vehicleCategory": { "type": "string", "description": "Category (Bajaj, Taxi, Minibus, Private Car, Other)" },
+        "fuelPreference": { "type": "string", "description": "Preferred fuel (BENZENE or DIESEL)" },
+        "language": { "type": "string", "description": "Selected language code (am or en)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp via serverTimestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp via serverTimestamp" }
+      },
+      "required": ["userId", "fullName", "phoneNumber", "vehiclePlate", "vehicleCategory", "fuelPreference", "language"]
+    },
+    "Station": {
+      "title": "Station",
+      "description": "Fuel station operating details in Hawassa",
+      "type": "object",
+      "properties": {
+        "stationId": { "type": "string", "description": "Unique station identifier" },
+        "name": { "type": "string", "description": "Station name" },
+        "address": { "type": "string", "description": "Station address or Hawassa neighborhood" },
+        "latitude": { "type": "number", "description": "GPS latitude" },
+        "longitude": { "type": "number", "description": "GPS longitude" },
+        "operatingStatus": { "type": "string", "description": "Operating status: OPEN, PAUSED, CLOSED" },
+        "benzeneStock": { "type": "string", "description": "Benzene status: AVAILABLE, LOW_STOCK, OUT_OF_STOCK" },
+        "dieselStock": { "type": "string", "description": "Diesel status: AVAILABLE, LOW_STOCK, OUT_OF_STOCK" },
+        "avgServiceMinutesBenzene": { "type": "number", "description": "Average service duration for Benzene in minutes" },
+        "avgServiceMinutesDiesel": { "type": "number", "description": "Average service duration for Diesel in minutes" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["stationId", "name", "address", "operatingStatus", "benzeneStock", "dieselStock"]
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "description": "Virtual queue booking ticket",
+      "type": "object",
+      "properties": {
+        "ticketId": { "type": "string", "description": "Unique ticket identifier" },
+        "userId": { "type": "string", "description": "Driver Auth UID" },
+        "stationId": { "type": "string", "description": "Station ID" },
+        "driverName": { "type": "string", "description": "Driver name" },
+        "driverPhone": { "type": "string", "description": "Driver phone number" },
+        "vehiclePlate": { "type": "string", "description": "Vehicle registration plate" },
+        "vehicleCategory": { "type": "string", "description": "Vehicle category" },
+        "fuelType": { "type": "string", "description": "Fuel type: BENZENE or DIESEL" },
+        "sequenceNumber": { "type": "number", "description": "Sequential queue number" },
+        "status": { "type": "string", "description": "Status: WAITING, APPROACHING, CALLED, SERVING, COMPLETED, SKIPPED, CANCELLED" },
+        "estimatedWaitMinutes": { "type": "number", "description": "Estimated waiting time in minutes" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Booking creation timestamp" },
+        "calledAt": { "type": "string", "format": "date-time", "description": "Timestamp when called by manager" },
+        "serviceStartedAt": { "type": "string", "format": "date-time", "description": "Timestamp when service started" },
+        "completedAt": { "type": "string", "format": "date-time", "description": "Timestamp when service completed" }
+      },
+      "required": ["ticketId", "userId", "stationId", "driverName", "vehiclePlate", "fuelType", "sequenceNumber", "status"]
+    },
+    "QueueState": {
+      "title": "QueueState",
+      "description": "Live queue summary for a station",
+      "type": "object",
+      "properties": {
+        "stationId": { "type": "string", "description": "Station ID" },
+        "currentServingTicketId": { "type": "string", "description": "Ticket currently being served" },
+        "lastSequenceNumber": { "type": "number", "description": "Highest sequence number issued" },
+        "waitingCount": { "type": "number", "description": "Number of waiting vehicles" },
+        "isPaused": { "type": "boolean", "description": "Whether the queue is temporarily paused" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of last queue update" }
+      },
+      "required": ["stationId", "lastSequenceNumber", "waitingCount", "isPaused"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Driver user records"
+    },
+    "/stations/{stationId}": {
+      "schema": { "$ref": "#/entities/Station" },
+      "description": "Fuel stations in Hawassa"
+    },
+    "/tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/Ticket" },
+      "description": "Queue tickets for fuel stations"
+    },
+    "/queueState/{stationId}": {
+      "schema": { "$ref": "#/entities/QueueState" },
+      "description": "Real-time queue state per station"
+    }
+  }
+}

@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['userId', 'fullName', 'phoneNumber', 'vehiclePlate', 'vehicleCategory', 'fuelPreference', 'language']) &&
+        data.userId is string &&
+        data.fullName is string && data.fullName.size() > 0 &&
+        data.phoneNumber is string && data.phoneNumber.size() >= 9 &&
+        data.vehiclePlate is string && data.vehiclePlate.size() > 0 &&
+        data.vehicleCategory is string &&
+        data.fuelPreference in ['BENZENE', 'DIESEL'] &&
+        data.language in ['am', 'en'] &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidStation(data) {
+      return data.keys().hasAll(['stationId', 'name', 'address', 'operatingStatus', 'benzeneStock', 'dieselStock']) &&
+        data.stationId is string &&
+        data.name is string &&
+        data.address is string &&
+        data.operatingStatus in ['OPEN', 'PAUSED', 'CLOSED'] &&
+        data.benzeneStock in ['AVAILABLE', 'LOW_STOCK', 'OUT_OF_STOCK'] &&
+        data.dieselStock in ['AVAILABLE', 'LOW_STOCK', 'OUT_OF_STOCK'] &&
+        (!('nameAmharic' in data) || data.nameAmharic is string) &&
+        (!('addressAmharic' in data) || data.addressAmharic is string) &&
+        (!('latitude' in data) || data.latitude is number) &&
+        (!('longitude' in data) || data.longitude is number) &&
+        (!('avgServiceMinutesBenzene' in data) || data.avgServiceMinutesBenzene is number) &&
+        (!('avgServiceMinutesDiesel' in data) || data.avgServiceMinutesDiesel is number) &&
+        (!('queueCapacity' in data) || data.queueCapacity is number) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidTicket(data) {
+      return data.keys().hasAll(['ticketId', 'userId', 'stationId', 'driverName', 'vehiclePlate', 'fuelType', 'sequenceNumber', 'status']) &&
+        data.ticketId is string &&
+        data.userId is string &&
+        data.stationId is string &&
+        data.driverName is string &&
+        data.vehiclePlate is string &&
+        data.fuelType in ['BENZENE', 'DIESEL'] &&
+        data.sequenceNumber is number &&
+        data.status in ['WAITING', 'APPROACHING', 'CALLED', 'SERVING', 'COMPLETED', 'SKIPPED', 'CANCELLED'] &&
+        (!('driverPhone' in data) || data.driverPhone is string) &&
+        (!('vehicleCategory' in data) || data.vehicleCategory is string) &&
+        (!('estimatedWaitMinutes' in data) || data.estimatedWaitMinutes is number) &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        (!('calledAt' in data) || data.calledAt is timestamp) &&
+        (!('serviceStartedAt' in data) || data.serviceStartedAt is timestamp) &&
+        (!('completedAt' in data) || data.completedAt is timestamp);
+    }
+
+    function isValidQueueState(data) {
+      return data.keys().hasAll(['stationId', 'lastSequenceNumber', 'waitingCount', 'isPaused']) &&
+        data.stationId is string &&
+        data.lastSequenceNumber is number &&
+        data.waitingCount is number &&
+        data.isPaused is bool &&
+        (!('currentServingTicketId' in data) || data.currentServingTicketId is string || data.currentServingTicketId == null) &&
+        (!('currentServingPlate' in data) || data.currentServingPlate is string || data.currentServingPlate == null) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    match /stations/{stationId} {
+      allow read: if true;
+      allow create, update: if isValidStation(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if true;
+      allow create, update: if isValidTicket(request.resource.data);
+      allow delete: if true;
+    }
+
+    match /queueState/{stationId} {
+      allow read: if true;
+      allow create, update: if isValidQueueState(request.resource.data);
+      allow delete: if false;
+    }
+  }
+}

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foliisho Manager Dashboard — Hawassa Fuel Queue Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#0F172A',
+              card: '#1E293B',
+              border: '#334155',
+              amber: '#F59E0B',
+              green: '#10B981',
+              red: '#EF4444',
+              cyan: '#06B6D4'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Ethiopic', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', 'Noto Sans Ethiopic', sans-serif; background-color: #0B132B; color: #F8FAFC; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-brand-border bg-brand-navy/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-amber flex items-center justify-center text-brand-navy font-bold text-xl shadow-lg">
+          ⛽
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-extrabold text-lg text-white tracking-tight">ፎሊሾ • Foliisho</span>
+            <span class="px-2 py-0.5 rounded text-xs font-semibold bg-brand-amber/20 text-brand-amber border border-brand-amber/40">Station Manager Web</span>
+          </div>
+          <p class="text-xs text-slate-400">Hawassa Smart Fuel Queue Management System</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <!-- Station Selector Dropdown -->
+        <div class="flex items-center space-x-2 bg-brand-card border border-brand-border rounded-lg px-3 py-1.5">
+          <span class="text-xs text-slate-400">ማደያ / Station:</span>
+          <select id="stationSelect" class="bg-transparent text-sm font-semibold text-white focus:outline-none cursor-pointer">
+            <option value="total_piassa" class="bg-brand-navy">TotalEnergies Piassa (ቶታል ፒያሳ)</option>
+            <option value="noc_tabor" class="bg-brand-navy">NOC Shell / Tabor (ኖክ ታቦር)</option>
+            <option value="oilibya_tada" class="bg-brand-navy">Oilibya / Tada (ኦይሊቢያ ታዳ)</option>
+            <option value="yehualaweshet" class="bg-brand-navy">Yehualaweshet Station (የኋለእሸት)</option>
+          </select>
+        </div>
+
+        <!-- Live Sync Status Indicator -->
+        <div class="hidden sm:flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/30">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="font-medium">Firebase Live Sync</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Dashboard -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- KPI Statistics Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+        <span class="text-xs text-slate-400 block font-medium">አሁን በወረፋ ላይ / In Queue</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span id="statQueueCount" class="text-3xl font-extrabold text-white">0</span>
+          <span class="text-xs text-slate-400">vehicles</span>
+        </div>
+      </div>
+
+      <div class="bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+        <span class="text-xs text-slate-400 block font-medium">የሚስተናገደው / Serving Now</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span id="statCurrentServing" class="text-2xl font-bold font-mono text-brand-amber">--</span>
+        </div>
+      </div>
+
+      <div class="bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+        <span class="text-xs text-slate-400 block font-medium">የተጠናቀቁ / Served Today</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span id="statCompletedToday" class="text-3xl font-extrabold text-emerald-400">0</span>
+          <span class="text-xs text-slate-400">completed</span>
+        </div>
+      </div>
+
+      <div class="bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+        <span class="text-xs text-slate-400 block font-medium">አማካይ የአገልግሎት ጊዜ / Avg Speed</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span id="statAvgMinutes" class="text-3xl font-extrabold text-brand-cyan">3.5</span>
+          <span class="text-xs text-slate-400">min/vehicle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Pump & Controls Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left Column: Primary Queue Dispatch Terminal -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Active Serving Vehicle Card -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+              <h2 class="text-sm font-semibold tracking-wide text-slate-300 uppercase">በፓምፑ ላይ ያለ ተሽከርካሪ / Active Pump Service</h2>
+            </div>
+            <span id="queuePauseBadge" class="hidden px-2.5 py-1 rounded text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">ወረፋው ለጊዜው ቆሟል (Paused)</span>
+          </div>
+
+          <div class="bg-brand-navy/60 rounded-xl p-5 border border-brand-border/60 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <span class="text-xs text-slate-400 block">የትኬት ቁጥር / Ticket ID</span>
+              <span id="activeTicketId" class="text-4xl font-extrabold font-mono text-white tracking-wider">--</span>
+              <div class="mt-2 flex items-center space-x-3 text-sm">
+                <span id="activeDriverName" class="text-slate-200 font-medium">ምንም ንቁ ተሽከርካሪ የለም</span>
+                <span class="text-slate-500">•</span>
+                <span id="activePlate" class="font-mono font-bold text-brand-amber">--</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end">
+              <span class="text-xs text-slate-400">የነዳጅ ዓይነት / Fuel</span>
+              <span id="activeFuelType" class="text-lg font-bold text-brand-cyan mt-0.5">--</span>
+              <span id="activeVehicleCategory" class="text-xs text-slate-400 mt-1">--</span>
+            </div>
+          </div>
+
+          <!-- Operator Action Controls -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+            <button id="btnCallNext" class="bg-brand-amber hover:bg-amber-400 text-brand-navy font-bold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-md">
+              <span>📢</span>
+              <span>Call Next</span>
+            </button>
+
+            <button id="btnStartService" class="bg-brand-navy hover:bg-slate-800 text-white border border-brand-border font-semibold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition">
+              <span>⏱️</span>
+              <span>Start Service</span>
+            </button>
+
+            <button id="btnCompleteService" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-md">
+              <span>✅</span>
+              <span>Complete</span>
+            </button>
+
+            <button id="btnSkipTicket" class="bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/30 font-semibold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition">
+              <span>⏭️</span>
+              <span>Skip / No-Show</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Queue List Table -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-white">ተራ የሚጠብቁ ተሽከርካሪዎች / Upcoming Queue Tickets</h3>
+              <p class="text-xs text-slate-400">Real-time synchronized queue for selected station</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button id="btnPauseQueue" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-brand-border hover:bg-brand-border/40 text-slate-300">
+                ⏸️ ወረፋውን አቁም / Pause Queue
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="text-xs uppercase text-slate-400 bg-brand-navy/60 border-b border-brand-border">
+                <tr>
+                  <th class="py-3 px-4">ተ.ቁ / Seq</th>
+                  <th class="py-3 px-4">ትኬት / Ticket</th>
+                  <th class="py-3 px-4">ሰሌዳ / Plate</th>
+                  <th class="py-3 px-4">ነዳጅ / Fuel</th>
+                  <th class="py-3 px-4">ሁኔታ / Status</th>
+                  <th class="py-3 px-4 text-right">የሚጠበቅ / Wait</th>
+                </tr>
+              </thead>
+              <tbody id="queueTableBody" class="divide-y divide-brand-border/50 font-medium">
+                <tr>
+                  <td colspan="6" class="py-8 text-center text-slate-500">ተራ ላይ ያሉ ተሽከርካሪዎችን በማምጣት ላይ... (Loading live tickets...)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Station Stock & Simulator Panel -->
+      <div class="space-y-6">
+
+        <!-- Fuel Availability Management -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-6">
+          <h3 class="text-base font-bold text-white mb-1">የነዳጅ ክምችት ሁኔታ / Fuel Inventory</h3>
+          <p class="text-xs text-slate-400 mb-4">Updates synchronize immediately to all driver Android phones</p>
+
+          <div class="space-y-4">
+            <!-- Benzene Stock Switch -->
+            <div class="bg-brand-navy/60 p-4 rounded-xl border border-brand-border">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-sm text-white">ቤንዚን / Benzene</span>
+                <span id="badgeBenzeneStock" class="text-xs px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">AVAILABLE</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 mt-2">
+                <button onclick="setStock('benzene', 'AVAILABLE')" class="text-xs py-1.5 rounded-lg border border-emerald-500/40 hover:bg-emerald-500/20 text-emerald-300 font-semibold">Available</button>
+                <button onclick="setStock('benzene', 'LOW_STOCK')" class="text-xs py-1.5 rounded-lg border border-amber-500/40 hover:bg-amber-500/20 text-amber-300 font-semibold">Low Stock</button>
+                <button onclick="setStock('benzene', 'OUT_OF_STOCK')" class="text-xs py-1.5 rounded-lg border border-rose-500/40 hover:bg-rose-500/20 text-rose-300 font-semibold">Out</button>
+              </div>
+            </div>
+
+            <!-- Diesel Stock Switch -->
+            <div class="bg-brand-navy/60 p-4 rounded-xl border border-brand-border">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-sm text-white">ናፍጣ / Diesel</span>
+                <span id="badgeDieselStock" class="text-xs px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">AVAILABLE</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 mt-2">
+                <button onclick="setStock('diesel', 'AVAILABLE')" class="text-xs py-1.5 rounded-lg border border-emerald-500/40 hover:bg-emerald-500/20 text-emerald-300 font-semibold">Available</button>
+                <button onclick="setStock('diesel', 'LOW_STOCK')" class="text-xs py-1.5 rounded-lg border border-amber-500/40 hover:bg-amber-500/20 text-amber-300 font-semibold">Low Stock</button>
+                <button onclick="setStock('diesel', 'OUT_OF_STOCK')" class="text-xs py-1.5 rounded-lg border border-rose-500/40 hover:bg-rose-500/20 text-rose-300 font-semibold">Out</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation & Demonstration Tools -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-base font-bold text-white">የሙከራ መሣሪያዎች / Demo Tools</h3>
+            <span class="text-xs bg-brand-cyan/20 text-brand-cyan px-2 py-0.5 rounded font-mono">Sim Mode</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-4">Simulate driver bookings and queue progression</p>
+
+          <div class="space-y-3">
+            <button id="btnGenerateSampleTicket" class="w-full bg-brand-navy hover:bg-slate-800 text-brand-amber border border-brand-amber/30 text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition">
+              <span>➕</span>
+              <span>Generate Sample Driver Booking (Bajaj / Taxi)</span>
+            </button>
+
+            <button id="btnFastForwardClock" class="w-full bg-brand-navy hover:bg-slate-800 text-slate-200 border border-brand-border text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition">
+              <span>⏩</span>
+              <span>Fast-Forward Simulation Clock (+5 min)</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-brand-border py-4 text-center text-xs text-slate-500">
+    Foliisho (ፎሊሾ) — Hawassa Smart Fuel Queue Management System • Sidama Region, Ethiopia
+  </footer>
+
+  <!-- Firebase JavaScript SDK Modular Load -->
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

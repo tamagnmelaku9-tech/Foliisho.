@@ -1,0 +1,6 @@
+{
+  "name": "Foliisho",
+  "description": "Hawassa Smart Fuel Queue Management and Digital Booking System connecting drivers with real-time fuel station queues.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
